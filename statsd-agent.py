@@ -69,13 +69,29 @@ def memory():
         c.gauge('virtual.inactive', virtual.inactive)
         c.gauge('virtual.buffers', virtual.buffers)
         c.gauge('virtual.cached', virtual.cached)
-        
+
         time.sleep(10)
-        
+
+def network():
+    c = statsd.StatsClient('localhost', 8125, prefix='system.network')
+    while True:
+        net = psutil.net_io_counters()
+        c.gauge('net.bytes_recv', net.bytes_recv)
+        c.gauge('net.bytes_sent', net.bytes_sent)
+        c.gauge('net.packets_recv', net.packets_recv)
+        c.gauge('net.packets_sent', net.packets_sent)
+        c.gauge('net.errin', net.errin)
+        c.gauge('net.errout', net.errout)
+        c.gauge('net.dropin', net.dropin)
+        c.gauge('net.dropout', net.dropout)
+
+        time.sleep(10)
+
 if __name__ == '__main__':
     multiprocessing.Process(target=disk).start()
     multiprocessing.Process(target=cpu_times).start()
     multiprocessing.Process(target=cpu_times_percent).start()
     multiprocessing.Process(target=memory).start()
+    multiprocessing.Process(target=network).start()
 
 
