@@ -2,11 +2,13 @@ import statsd
 import time
 import psutil
 import multiprocessing
+import sys
 
 SLEEP_TIME = 10
+HOST_NAME = 'null_name'
 
 def disk():
-    c = statsd.StatsClient('monitor', 8125, prefix='system.disk')
+    c = statsd.StatsClient('monitor', 8125, prefix=HOST_NAME + '.system.disk')
     while True:
         disk_usage = psutil.disk_usage('/srv/node/sdb/')
         c.gauge('root.total', disk_usage.total)
@@ -26,7 +28,7 @@ def disk():
         time.sleep(SLEEP_TIME)
 
 def cpu_times():
-    c = statsd.StatsClient('monitor', 8125, prefix='system.cpu')
+    c = statsd.StatsClient('monitor', 8125, prefix=HOST_NAME + '.system.cpu')
     while True:
         cpu_times = psutil.cpu_times()
         c.gauge('system_wide.times.user', cpu_times.user)
@@ -43,7 +45,7 @@ def cpu_times():
         time.sleep(SLEEP_TIME)
 
 def cpu_times_percent():
-    c = statsd.StatsClient('monitor', 8125, prefix='system.cpu')
+    c = statsd.StatsClient('monitor', 8125, prefix=HOST_NAME + '.system.cpu')
     while True:
         value = psutil.cpu_percent(interval=1)
         c.gauge('system_wide.percent', value)
@@ -62,7 +64,7 @@ def cpu_times_percent():
         time.sleep(SLEEP_TIME)
 
 def memory():
-    c = statsd.StatsClient('monitor', 8125, prefix='system.memory')
+    c = statsd.StatsClient('monitor', 8125, prefix=HOST_NAME + '.system.memory')
     while True:
         swap = psutil.swap_memory()
         c.gauge('swap.total', swap.total)
@@ -84,7 +86,7 @@ def memory():
         time.sleep(SLEEP_TIME)
 
 def network():
-    c = statsd.StatsClient('monitor', 8125, prefix='system.network')
+    c = statsd.StatsClient('monitor', 8125, prefix=HOST_NAME + '.system.network')
     while True:
         net = psutil.net_io_counters()
         c.gauge('net.bytes_recv', net.bytes_recv)
@@ -99,6 +101,12 @@ def network():
         time.sleep(SLEEP_TIME)
 
 if __name__ == '__main__':
+
+    if len(sys.argv) != 2:
+        print 'usage : statsd-agent.py <host_name>\n'
+        sys.exit(1)
+
+    HOST_NAME = sys.argv[1]
     multiprocessing.Process(target=disk).start()
     multiprocessing.Process(target=cpu_times).start()
     multiprocessing.Process(target=cpu_times_percent).start()
