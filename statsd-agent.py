@@ -3,19 +3,30 @@ import time
 import psutil
 import multiprocessing
 
+SLEEP_TIME = 10
+
 def disk():
-    c = statsd.StatsClient('localhost', 8125, prefix='system.disk')
+    c = statsd.StatsClient('monitor', 8125, prefix='system.disk')
     while True:
-        disk_usage = psutil.disk_usage('/')
+        disk_usage = psutil.disk_usage('/srv/node/sdb/')
         c.gauge('root.total', disk_usage.total)
         c.gauge('root.used', disk_usage.used)
         c.gauge('root.free', disk_usage.free)
         c.gauge('root.percent', disk_usage.percent)
+
+        disk_io_c = psutil.disk_io_counters(perdisk=False)
+        c.gauge('root.read_count', disk_io_c.read_count)
+        c.gauge('root.write_count', disk_io_c.write_count)
+        c.gauge('root.read_bytes', disk_io_c.read_bytes)
+        c.gauge('root.write_bytes', disk_io_c.write_bytes)
+        c.gauge('root.read_time', disk_io_c.read_time)
+        c.gauge('root.write_time', disk_io_c.write_time)
+        c.gauge('root.busy_time', disk_io_c.busy_time)
             
-        time.sleep(10)
+        time.sleep(SLEEP_TIME)
 
 def cpu_times():
-    c = statsd.StatsClient('localhost', 8125, prefix='system.cpu')
+    c = statsd.StatsClient('monitor', 8125, prefix='system.cpu')
     while True:
         cpu_times = psutil.cpu_times()
         c.gauge('system_wide.times.user', cpu_times.user)
@@ -29,10 +40,10 @@ def cpu_times():
         c.gauge('system_wide.times.guest', cpu_times.guest)
         c.gauge('system_wide.times.guest_nice', cpu_times.guest_nice)
         
-        time.sleep(10)
+        time.sleep(SLEEP_TIME)
 
 def cpu_times_percent():
-    c = statsd.StatsClient('localhost', 8125, prefix='system.cpu')
+    c = statsd.StatsClient('monitor', 8125, prefix='system.cpu')
     while True:
         value = psutil.cpu_percent(interval=1)
         c.gauge('system_wide.percent', value)
@@ -48,10 +59,10 @@ def cpu_times_percent():
         c.gauge('system_wide.times_percent.steal', cpu_times_percent.steal)
         c.gauge('system_wide.times_percent.guest', cpu_times_percent.guest)
         c.gauge('system_wide.times_percent.guest_nice', cpu_times_percent.guest_nice)
-        time.sleep(10)
+        time.sleep(SLEEP_TIME)
 
 def memory():
-    c = statsd.StatsClient('localhost', 8125, prefix='system.memory')
+    c = statsd.StatsClient('monitor', 8125, prefix='system.memory')
     while True:
         swap = psutil.swap_memory()
         c.gauge('swap.total', swap.total)
@@ -70,10 +81,10 @@ def memory():
         c.gauge('virtual.buffers', virtual.buffers)
         c.gauge('virtual.cached', virtual.cached)
 
-        time.sleep(10)
+        time.sleep(SLEEP_TIME)
 
 def network():
-    c = statsd.StatsClient('localhost', 8125, prefix='system.network')
+    c = statsd.StatsClient('monitor', 8125, prefix='system.network')
     while True:
         net = psutil.net_io_counters()
         c.gauge('net.bytes_recv', net.bytes_recv)
@@ -85,7 +96,7 @@ def network():
         c.gauge('net.dropin', net.dropin)
         c.gauge('net.dropout', net.dropout)
 
-        time.sleep(10)
+        time.sleep(SLEEP_TIME)
 
 if __name__ == '__main__':
     multiprocessing.Process(target=disk).start()
